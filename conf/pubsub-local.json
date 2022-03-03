@@ -1,0 +1,51 @@
+{
+  "unicast" : "127.0.0.2",
+  "logging" :
+  {
+    "level" : "debug",
+    "console" : "true",
+    "file" : { "enable" : "false", "path" : "/tmp/vsomeip.log" },
+    "dlt" : "false"
+  },
+  "applications" :
+  [
+    {
+      "name" : "zsomeip_publisher",
+      "id" : "0x1277"
+    },
+    {
+      "name" : "zsomeip_subscriber",
+      "id" : "0x1344"
+    }
+  ],
+  "services" :
+  [
+    {
+      "service" : "0x1234",
+      "instance" : "0x5678",
+      "unreliable" : "30509",
+      "events" :
+      [
+        {
+          "event" : "0x2468",
+          "is_field": "false"
+        }
+      ],
+      "eventgroups" :
+      [
+        {
+          "eventgroup" : "0x1357",
+          "events" : [ "0x2468" ]
+        }
+      ]
+    }
+  ],
+  "service-discovery" :
+  {
+    "enable" : "true",
+    "multicast" : "224.0.0.224",
+    "port" : "30491",
+    "protocol" : "udp",
+    "cyclic_offer_delay" : "5000"
+  }
+}
