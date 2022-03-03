@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::seconds{1});
         zsomeIpService.start();
 
-        while(signalStatus != SIGINT) {
+        while (signalStatus != SIGINT) {
             std::this_thread::sleep_for(std::chrono::seconds{1});
         }
 
@@ -95,20 +95,39 @@ int main(int argc, char **argv) {
         weather::CurrentTemperatureService::Client weatherClient(zsomeIpClient);
         weather::City location("Tallinn");
 
-        while(signalStatus != SIGINT) {
+        while (signalStatus != SIGINT) {
             try {
-                std::cout << *methodDef << " Requesting..." << std::endl;
-                // TODO add request timeout to recover from errors
-                auto currentTemperature = weatherClient.getTemperatureInMethod(location);
-                std::cout << "Current temperature in Tallinn: " << currentTemperature.getValue() << std::endl;
+                std::cout << *methodDef << " Requesting... (timeout 10 seconds)" << std::endl;
+                weather::Temperature currentTemperature;
+                bool done = false;
+                std::thread weatherFetch([&] {
+                    currentTemperature = weatherClient.getTemperatureInMethod(location);
+                    done = true;
+                });
+                for (auto i = 0; i < 10; i++) {
+                    if (!done && signalStatus != SIGINT) {
+                        std::this_thread::sleep_for(std::chrono::seconds{1});
+                    } else {
+                        break;
+                    }
+                }
+                if (done) {
+                    std::cout << std::endl;
+                    weatherFetch.join();
+                    std::cout << "Current temperature in Tallinn: " << currentTemperature.getValue() << std::endl;
+                } else {
+                    std::cout << *methodDef << " Request timed out" << std::endl;
+                    weatherFetch.detach();
+                }
+
             } catch (const std::exception& e) {
                 std::cout << e.what() << std::endl;
                 std::cout << "Stopping zsomeip client..." << std::endl;
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::seconds{2});
         }
         app->clear_all_handler();
+        // TODO properly deregister methods or the app will not stop
         app->stop();
         someIpThread.join();
     }
