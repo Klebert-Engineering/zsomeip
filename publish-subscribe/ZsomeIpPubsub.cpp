@@ -95,8 +95,12 @@ ZsomeIpPubsub::ZsomeIpPublisher::ZsomeIpPublisher(
         std::shared_ptr<vsomeip::application> someIpApp, std::shared_ptr<TopicDefinition> topicDef)
     : app_(std::move(someIpApp)), def_(std::move(topicDef))
 {
+    // TODO use state handler to assure app is running instead of sleep
+    std::this_thread::sleep_for(std::chrono::seconds{1});
+
     app_->offer_service(def_->agent.serviceId, def_->agent.instanceId);
     app_->offer_event(def_->agent.serviceId, def_->agent.instanceId, def_->eventId, def_->eventGroups);
+
     // TODO await state handler confirmation before returning
 
     std::cout << *def_ << " created publisher" << std::endl;
@@ -106,6 +110,7 @@ ZsomeIpPubsub::ZsomeIpPublisher::~ZsomeIpPublisher()
 {
     app_->stop_offer_event(def_->agent.serviceId, def_->agent.instanceId, def_->eventId);
     app_->stop_offer_service(def_->agent.serviceId, def_->agent.instanceId);
+
     // TODO await state handler confirmation before returning
 }
 
@@ -119,9 +124,7 @@ zserio::StringView ZsomeIpPubsub::ZsomeIpPublisher::topic() const {
 }
 
 ZsomeIpPubsub::ZsomeIpPubsub(const std::string& appName, bool useTcp)
-        : app_(vsomeip::runtime::get()->create_application(appName)),
-          useTcp_(useTcp), idCounter_(0),
-          app_thread_(std::bind(&ZsomeIpPubsub::runSomeIP, this)) {}
+        : ZsomeIpApp(appName), useTcp_(useTcp), idCounter_(0) {}
 
 // no inline to because ZsomeIpSubscription uses unique_ptr
 ZsomeIpPubsub::~ZsomeIpPubsub() = default;
@@ -154,6 +157,9 @@ ZsomeIpPubsub::SubscriptionId ZsomeIpPubsub::subscribe(
         const std::shared_ptr<OnTopicCallback>& callback,
         void* topicDefinition)
 {
+    // TODO use state handler to assure app is running instead of sleep
+    std::this_thread::sleep_for(std::chrono::seconds{1});
+
     // TODO synchronize subscription adding/removing
     auto def = *(std::shared_ptr<TopicDefinition>*)topicDefinition;
     subscriptions_.emplace(idCounter_, std::make_unique<ZsomeIpSubscription>(
@@ -166,20 +172,10 @@ void ZsomeIpPubsub::unsubscribe(SubscriptionId id)
     subscriptions_.erase(id);
 }
 
-void ZsomeIpPubsub::shutdown() {
-    app_->clear_all_handler();
-
+void ZsomeIpPubsub::clear() {
     // Destructors take care of unsubscribing, unregistering & co.
     subscriptions_.erase(subscriptions_.begin(), subscriptions_.end());
     publishers_.erase(publishers_.begin(), publishers_.end());
-
-    app_->stop();
-    app_thread_.join();
-}
-
-void ZsomeIpPubsub::runSomeIP() {
-    app_->init();
-    app_->start();
 }
 
 } // namespace zsomeip

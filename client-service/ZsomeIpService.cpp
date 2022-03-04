@@ -10,12 +10,13 @@ namespace zsomeip {
 // TODO accept multiple MethodDefinitions per service/client (see pubsub)
 
 ZsomeIpService::ZsomeIpService(
-        std::shared_ptr<vsomeip::application> someIpApp,
+        const std::string& appName,
         std::shared_ptr<MethodDefinition> methodDefinition,
         zserio::IService& internalService)
-        : app_(std::move(someIpApp)), def_(std::move(methodDefinition)), zService_(internalService) {
+    : ZsomeIpApp(appName), def_(std::move(methodDefinition)), zService_(internalService) {
 
-    // TODO add state handler
+    // TODO use state handler instead of sleep
+    std::this_thread::sleep_for(std::chrono::seconds{1});
 
     app_->register_message_handler(
         def_->agent.serviceId,
@@ -24,9 +25,14 @@ ZsomeIpService::ZsomeIpService(
         std::bind(&ZsomeIpService::internalCallback, this, std::placeholders::_1));
 }
 
-void ZsomeIpService::start() {
+void ZsomeIpService::offerService() {
     app_->offer_service(def_->agent.serviceId, def_->agent.instanceId);
     std::cout << *def_ << " offering..." << std::endl;
+}
+
+void ZsomeIpService::clear() {
+    app_->stop_offer_service(def_->agent.serviceId, def_->agent.instanceId);
+
 }
 
 void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &request) {
@@ -43,16 +49,21 @@ void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &r
     app_->send(response);
 }
 
-ZsomeIpPubsub::ZsomeIpPubsub(
-        std::shared_ptr<vsomeip::application> someIpApp,
+ZsomeIpClient::ZsomeIpClient(
+        const std::string& appName,
         std::shared_ptr<MethodDefinition> methodDefinition)
-        : app_(std::move(someIpApp)), def_(std::move(methodDefinition)) {
-    app_->register_message_handler(def_->agent.serviceId, def_->agent.instanceId, def_->someIpMethod,
-                                   std::bind(&ZsomeIpPubsub::onResponse, this, std::placeholders::_1));
+    : ZsomeIpApp(appName), def_(std::move(methodDefinition)) {
 
+    // TODO use state handler instead of sleep
+    std::this_thread::sleep_for(std::chrono::seconds{1});
+
+    app_->register_message_handler(
+        def_->agent.serviceId, def_->agent.instanceId, def_->someIpMethod,
+        std::bind(&ZsomeIpClient::onResponse, this, std::placeholders::_1));
+    app_->request_service(def_->agent.serviceId, def_->agent.instanceId);
 }
 
-std::vector<uint8_t> ZsomeIpPubsub::callMethod(
+std::vector<uint8_t> ZsomeIpClient::callMethod(
         zserio::StringView methodName,
         const zserio::IServiceData& requestData,
         void* context) {
@@ -80,7 +91,7 @@ std::vector<uint8_t> ZsomeIpPubsub::callMethod(
     return responseData;
 }
 
-void ZsomeIpPubsub::onResponse(const std::shared_ptr<vsomeip::message> &response) {
+void ZsomeIpClient::onResponse(const std::shared_ptr<vsomeip::message> &response) {
     if (response->get_return_code() == vsomeip::return_code_e::E_OK) {
         response_ok_ = true;
         response_payload_ = response->get_payload();
@@ -89,6 +100,11 @@ void ZsomeIpPubsub::onResponse(const std::shared_ptr<vsomeip::message> &response
         response_ok_ = false;
     }
     response_arrived_.notify_one();
+}
+
+void ZsomeIpClient::clear()
+{
+    app_->release_service(def_->agent.serviceId, def_->agent.instanceId);
 }
 
 }

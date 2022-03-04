@@ -43,12 +43,12 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    signal (SIGINT,storeSignal);
+    std::cout << "Press Ctrl+C to stop SOME/IP app..." << std::endl;
+
     std::string appName = runAsPublisher ? "zsomeip_publisher" : "zsomeip_subscriber";
     zsomeip::ZsomeIpPubsub zsomeIpPubsub(appName, false);
     weather::WeatherTopics weatherTopics(zsomeIpPubsub);
-
-    // TODO use state handler instead of sleep
-    std::this_thread::sleep_for(std::chrono::seconds{1});
 
     zserio::StringView topicName("weather/current");
     zsomeip::AgentDefinition defaultAgent{SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID};
@@ -65,9 +65,6 @@ int main(int argc, char **argv) {
         weatherTopics.subscribeCurrentWeather(callback, static_cast<void*>(&weatherTopicDefinition));
     }
     std::this_thread::sleep_for(std::chrono::seconds{1});
-
-    signal (SIGINT,storeSignal);
-    std::cout << "Press Ctrl+C to stop SOME/IP app..." << std::endl;
 
     weather::WeatherDescription currentWeather("same as usual");
     while(signalStatus != SIGINT) {

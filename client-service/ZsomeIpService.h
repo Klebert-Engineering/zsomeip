@@ -7,44 +7,47 @@
 #include "zserio/IService.h"
 #include "vsomeip/vsomeip.hpp"
 #include "zsomeip-defs/MethodDefinition.h"
+#include "zsomeip-defs/ZsomeIpApp.h"
 
 namespace zsomeip
 {
 
 /* Wrapper for a zserio service to be registered and offered via SOME/IP. */
-class ZsomeIpService {
+class ZsomeIpService : public ZsomeIpApp {
 public:
     ZsomeIpService(
-            std::shared_ptr<vsomeip::application> someIpApp,
-            std::shared_ptr<MethodDefinition> methodDefinition,
-            zserio::IService& internalService);
+        const std::string& appName,
+        std::shared_ptr<MethodDefinition> methodDefinition,
+        zserio::IService& internalService);
 
-    void start();
+    void offerService();
+    void clear() override;
 
 private:
     void internalCallback(const std::shared_ptr<vsomeip::message> &message);
 
-    std::shared_ptr<vsomeip::application> app_;
     std::shared_ptr<MethodDefinition> def_;
     zserio::IService& zService_;
 
 };
 
 /* Sends requests to zserio services via SOME/IP.  */
-class ZsomeIpPubsub : public zserio::IServiceClient {
+class ZsomeIpClient : public zserio::IServiceClient, public ZsomeIpApp {
 public:
-    ZsomeIpPubsub(
-        std::shared_ptr<vsomeip::application> someIpApp,
+    ZsomeIpClient(
+        const std::string& appName,
         std::shared_ptr<MethodDefinition> methodDefinition);
     std::vector<uint8_t> callMethod(
         zserio::StringView methodName,
         const zserio::IServiceData& requestData,
         void* context) override;
 
+protected:
+    void clear() override;
+
 private:
     void onResponse(const std::shared_ptr<vsomeip::message> &response);
 
-    std::shared_ptr<vsomeip::application> app_;
     std::shared_ptr<MethodDefinition> def_;
 
     std::mutex running_mutex_;

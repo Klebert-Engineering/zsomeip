@@ -5,8 +5,10 @@ add_library(ZsomeIpDefinitions
   include/zsomeip-defs/AgentDefinition.h
   include/zsomeip-defs/TopicDefinition.h
   include/zsomeip-defs/MethodDefinition.h
+  include/zsomeip-defs/ZsomeIpApp.h
   src/TopicDefinition.cpp
-  src/MethodDefinition.cpp)
+  src/MethodDefinition.cpp
+  src/ZsomeIpApp.cpp)
 
 target_include_directories(ZsomeIpDefinitions
   PRIVATE
@@ -15,4 +17,8 @@ target_include_directories(ZsomeIpDefinitions
   PUBLIC
     include)
 
-target_link_libraries(ZsomeIpDefinitions PRIVATE ZserioCppRuntime vsomeip3)
+target_link_libraries(ZsomeIpDefinitions
+  PRIVATE
+    ZserioCppRuntime
+    vsomeip3
+    ${CMAKE_THREAD_LIBS_INIT})
