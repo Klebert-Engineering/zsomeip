@@ -70,8 +70,8 @@ int main(int argc, char **argv) {
     while(signalStatus != SIGINT) {
         std::this_thread::sleep_for(std::chrono::seconds{2});
         if (runAsPublisher) {
+            std::cout << "Publishing current weather: " << currentWeather.getDescription() << std::endl;
             weatherTopics.publishCurrentWeather(currentWeather, static_cast<void *>(&weatherTopicDefinition));
-            std::cout << "Published current weather: " << currentWeather.getDescription() << std::endl;
         }
     }
 
