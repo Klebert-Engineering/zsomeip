@@ -28,14 +28,14 @@ public:
     ~ZsomeIpPubsub();
 
     bool addPublisher(std::shared_ptr<TopicDefinition> &def);
-    virtual void publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void* result) override;
-    virtual SubscriptionId subscribe(zserio::StringView topic, const std::shared_ptr<OnTopicCallback>& callback,
+    void publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void* result) override;
+    SubscriptionId subscribe(zserio::StringView topic, const std::shared_ptr<OnTopicCallback>& callback,
         void* topicDefinition) override;
-    virtual void unsubscribe(SubscriptionId id) override;
+    void unsubscribe(SubscriptionId id) override;
 
 protected:
     void clear() override;
-    void on_state(vsomeip::state_type_e _state) override;
+    void onState(vsomeip::state_type_e _state) override;
 
 private:
     bool useTcp_; // TODO UDP/TCP switch

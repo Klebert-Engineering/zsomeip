@@ -19,10 +19,10 @@ public:
         const std::string& appName,
         std::shared_ptr<MethodDefinition> methodDefinition,
         zserio::IService& internalService);
-
-    void offerService();
     void clear() override;
-    void on_state(vsomeip::state_type_e _state) override;
+
+protected:
+    void onState(vsomeip::state_type_e _state) override;
 
 private:
     void internalCallback(const std::shared_ptr<vsomeip::message> &message);
@@ -45,10 +45,11 @@ public:
 
 protected:
     void clear() override;
-    void on_state(vsomeip::state_type_e _state) override;
+    void onState(vsomeip::state_type_e _state) override;
 
 private:
     void onResponse(const std::shared_ptr<vsomeip::message> &response);
+    void onAvailability(vsomeip::service_t service, vsomeip::instance_t instance, bool available);
 
     std::shared_ptr<MethodDefinition> def_;
     std::mutex running_mutex_;
@@ -56,6 +57,7 @@ private:
     bool response_ok_ = true;
     std::shared_ptr<vsomeip::payload> response_payload_;
     std::mutex clients_m_;
+    bool available_ = false;
 };
 
 }

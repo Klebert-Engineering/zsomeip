@@ -10,6 +10,8 @@
 #define SAMPLE_INSTANCE_ID      0x2222
 #define SAMPLE_METHOD_ID        0x3333
 
+#define REQUEST_TIMEOUT_SECONDS 10
+
 namespace {
     volatile std::sig_atomic_t signalStatus;
 }
@@ -64,8 +66,6 @@ int main(int argc, char **argv) {
     if (runAsService) {
         MyTemperatureService service{};
         zsomeip::ZsomeIpService zsomeIpService(appName, methodDef, service);
-        // TODO move service offering inside service creation
-        zsomeIpService.offerService();
 
         while (signalStatus != SIGINT) {
             std::this_thread::sleep_for(std::chrono::seconds{1});
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         weather::City location("Tallinn");
 
         while (signalStatus != SIGINT) {
-            std::cout << *methodDef << " Requesting... (timeout 10 seconds)" << std::endl;
+            std::cout << *methodDef << " Requesting... (timeout " << REQUEST_TIMEOUT_SECONDS << "s)" << std::endl;
             weather::Temperature currentTemperature;
             bool done = false;
             bool errored = false;
@@ -94,8 +94,11 @@ int main(int argc, char **argv) {
                     std::cout << e.what();
                 }
             });
-            for (auto i = 0; i < 10; i++) {
+            // Wait REQUEST_TIMEOUT_SECONDS before creating a new request.
+            auto i = 0;
+            while (i < REQUEST_TIMEOUT_SECONDS) {
                 if (!done && signalStatus != SIGINT) {
+                    i++;
                     std::this_thread::sleep_for(std::chrono::seconds{1});
                 } else {
                     break;
@@ -107,6 +110,15 @@ int main(int argc, char **argv) {
             } else {
                 std::cout << *methodDef << " Request errored or timed out" << std::endl;
                 weatherFetch.detach();
+            }
+            // Finish waiting.
+            while (i < REQUEST_TIMEOUT_SECONDS) {
+                if (signalStatus != SIGINT) {
+                    i++;
+                    std::this_thread::sleep_for(std::chrono::seconds{1});
+                } else {
+                    break;
+                }
             }
         }
         std::cout << "Stopping zsomeip client..." << std::endl;

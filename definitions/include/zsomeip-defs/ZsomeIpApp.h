@@ -10,23 +10,29 @@ namespace zsomeip {
 
 class ZsomeIpApp {
 public:
-    /* ZsomeIpApp construction will start run() in a private app thread. */
+    /* ZsomeIpApp constructor will start run() in a private app thread and
+     * wait until vsomeip app initialization is complete before returning. */
     explicit ZsomeIpApp(const std::string& appName);
     void shutdown();
 
 protected:
     /* ZsomeIpApp implementations must stop all event or service
-     * offers when clear() is called. Otherwise, app will not shut down. */
+     * offers when clear() is called. Otherwise, the app will not shut down. */
     virtual void clear() = 0;
 
-    virtual void on_state(vsomeip::state_type_e _state);
-    void on_availability(vsomeip::service_t service, vsomeip::instance_t instance, bool available);
+    /* ZsomeIpApp implementations should only offer services when receiving the
+     * onState(ST_REGISTERED) call. Otherwise, offer will not reach clients. */
+    virtual void onState(vsomeip::state_type_e _state) = 0;
+
+    /* Set to true if the last onState call was with ST_REGISTERED,
+     * and to false if it was ST_DEREGISTERED. */
+    bool registered_ = false;
 
     std::shared_ptr <vsomeip::application> app_;
-    bool registered_ = false;
 
 private:
     void run();
+    virtual void on_state(vsomeip::state_type_e _state);
     std::thread app_thread_{};
     std::mutex initialize_m_{};
     std::condition_variable initialized_{};

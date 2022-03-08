@@ -64,14 +64,14 @@ int main(int argc, char **argv) {
             callback(new MyWeatherCallback());
         weatherTopics.subscribeCurrentWeather(callback, static_cast<void*>(&weatherTopicDefinition));
     }
-    std::this_thread::sleep_for(std::chrono::seconds{1});
 
-    weather::WeatherDescription currentWeather("same as usual");
+    weather::WeatherDescription currentWeather("same as always");
     while(signalStatus != SIGINT) {
-        std::this_thread::sleep_for(std::chrono::seconds{2});
+        std::this_thread::sleep_for(std::chrono::seconds{1});
         if (runAsPublisher) {
             std::cout << "Publishing current weather: " << currentWeather.getDescription() << std::endl;
             weatherTopics.publishCurrentWeather(currentWeather, static_cast<void *>(&weatherTopicDefinition));
+            std::this_thread::sleep_for(std::chrono::seconds{1});
         }
     }
 
