@@ -30,9 +30,9 @@ void ZsomeIpApp::shutdown() {
 }
 
 void ZsomeIpApp::on_state(vsomeip::state_type_e state) {
-    std::cout << "\n[" << app_->get_name() << "] "
+    std::cout << "[" << app_->get_name() << "] "
               << (state == vsomeip::state_type_e::ST_REGISTERED ?
-                  "registered.\n" : "deregistered.\n") << std::endl;
+                  "registered." : "deregistered.") << std::endl;
 
     registered_ = (state == vsomeip::state_type_e::ST_REGISTERED);
 }

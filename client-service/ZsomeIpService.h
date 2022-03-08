@@ -22,13 +22,14 @@ public:
 
     void offerService();
     void clear() override;
+    void on_state(vsomeip::state_type_e _state) override;
 
 private:
     void internalCallback(const std::shared_ptr<vsomeip::message> &message);
 
     std::shared_ptr<MethodDefinition> def_;
     zserio::IService& zService_;
-
+    std::mutex services_m_;
 };
 
 /* Sends requests to zserio services via SOME/IP.  */
@@ -44,16 +45,17 @@ public:
 
 protected:
     void clear() override;
+    void on_state(vsomeip::state_type_e _state) override;
 
 private:
     void onResponse(const std::shared_ptr<vsomeip::message> &response);
 
     std::shared_ptr<MethodDefinition> def_;
-
     std::mutex running_mutex_;
     std::condition_variable response_arrived_;
     bool response_ok_ = true;
     std::shared_ptr<vsomeip::payload> response_payload_;
+    std::mutex clients_m_;
 };
 
 }

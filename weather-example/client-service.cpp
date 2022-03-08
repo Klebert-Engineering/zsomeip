@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
     if (runAsService) {
         MyTemperatureService service{};
         zsomeip::ZsomeIpService zsomeIpService(appName, methodDef, service);
+        // TODO move service offering inside service creation
         zsomeIpService.offerService();
 
         while (signalStatus != SIGINT) {

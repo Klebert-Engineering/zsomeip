@@ -34,6 +34,12 @@
     "multicast" : "224.0.0.224",
     "port" : "30491",
     "protocol" : "udp",
-    "cyclic_offer_delay" : "5000"
+    "initial_delay_min" : "10",
+    "initial_delay_max" : "100",
+    "repetitions_base_delay" : "200",
+    "repetitions_max" : "3",
+    "ttl" : "3",
+    "cyclic_offer_delay" : "2000",
+    "request_response_delay" : "1500"
   }
 }

@@ -65,7 +65,6 @@ ZsomeIpPubsub::ZsomeIpSubscription::~ZsomeIpSubscription()
 }
 
 void ZsomeIpPubsub::ZsomeIpSubscription::internalCallback(const std::shared_ptr<vsomeip::message> &message) {
-    std::cout << *def_ << " callback triggered for subscriber " << subscriptionId_ << std::endl;
     uint8_t* payload = static_cast<uint8_t*>(message->get_payload()->get_data());
     uint32_t length = message->get_payload()->get_length();
     std::vector<uint8_t> data(payload, payload + length);
@@ -117,7 +116,6 @@ void ZsomeIpPubsub::ZsomeIpPublisher::publish(const zserio::Span<const uint8_t>&
 ZsomeIpPubsub::ZsomeIpPubsub(const std::string& appName, bool useTcp)
         : ZsomeIpApp(appName), useTcp_(useTcp), idCounter_(0) {}
 
-// no inline to because ZsomeIpSubscription uses unique_ptr
 ZsomeIpPubsub::~ZsomeIpPubsub() = default;
 
 bool ZsomeIpPubsub::addPublisher(std::shared_ptr<zsomeip::TopicDefinition> &def)
@@ -141,7 +139,7 @@ bool ZsomeIpPubsub::addPublisher(std::shared_ptr<zsomeip::TopicDefinition> &def)
 void ZsomeIpPubsub::publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void*)
 {
     if (!registered_) {
-        std::cout << "Tried to publish before registering complete, skipping..." << std:: endl;
+        std::cout << "[ERROR] Tried to publish before registering complete. Skipping..." << std:: endl;
         return;
     }
     std::lock_guard<std::mutex> p_lock(publishers_m_);

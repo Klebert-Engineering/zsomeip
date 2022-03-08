@@ -17,7 +17,6 @@ MethodDefinition::MethodDefinition(
 }
 
 
-// TODO use strftime and delete format_string
 std::ostream &operator<<(std::ostream &out, const MethodDefinition &def) {
     out << def.description_;
     return out;
