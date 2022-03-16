@@ -74,15 +74,13 @@ std::vector<uint8_t> ZsomeIpClient::callMethod(
     std::vector<uint8_t> responseData{};
 
     if (!registered_) {
-        std::cout << "[ERROR] Tried to request before registering complete. Skipping..." << std:: endl;
-        return responseData;
+        throw ZsomeIpRuntimeError("registering not completed, skipping request");
     }
 
     {
         std::lock_guard<std::mutex> a_guard(clients_m_);
         if (!available_) {
-            std::cout << "[ERROR] Tried to request when service unavailable. Skipping..." << std::endl;
-            return responseData;
+            throw ZsomeIpRuntimeError("service unavailable, skipping request");
         }
     }
 
@@ -98,12 +96,14 @@ std::vector<uint8_t> ZsomeIpClient::callMethod(
     app_->send(request);
     response_arrived_.wait(lock_until_response);
 
-    if (response_ok_) {
-        auto* payload = static_cast<uint8_t*>(response_payload_->get_data());
-        uint32_t length = response_payload_->get_length();
-        responseData.resize(length);
-        std::copy_n(payload, length, responseData.begin());
+    if (response_code_ != vsomeip::return_code_e::E_OK) {
+        throw ZsomeIpRuntimeError(response_code_);
     }
+
+    auto* payload = static_cast<uint8_t*>(response_payload_->get_data());
+    uint32_t length = response_payload_->get_length();
+    responseData.resize(length);
+    std::copy_n(payload, length, responseData.begin());
 
     return responseData;
 }
@@ -116,12 +116,9 @@ void ZsomeIpClient::clear()
 
 void ZsomeIpClient::onResponse(const std::shared_ptr<vsomeip::message> &response)
 {
-    if (response->get_return_code() == vsomeip::return_code_e::E_OK) {
-        response_ok_ = true;
+    response_code_ = response->get_return_code();
+    if (response_code_ == vsomeip::return_code_e::E_OK) {
         response_payload_ = response->get_payload();
-    } else {
-        printf("Received return code %hhu \n", static_cast<uint8_t>(response->get_return_code()));
-        response_ok_ = false;
     }
     response_arrived_.notify_one();
 }

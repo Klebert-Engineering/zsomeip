@@ -85,13 +85,14 @@ int main(int argc, char **argv) {
             weather::Temperature currentTemperature;
             bool done = false;
             bool errored = false;
+            bool canceled = false;
             std::thread weatherFetch([&] {
                 try {
                     currentTemperature = weatherClient.getTemperatureInMethod(location);
                     done = true;
                 } catch (const std::exception& e) {
                     errored = true;
-                    std::cout << e.what();
+                    std::cout << *methodDef << " [ERROR] " << e.what() << std::endl;
                 }
             });
             // Wait REQUEST_TIMEOUT_SECONDS before creating a new request.
@@ -101,6 +102,7 @@ int main(int argc, char **argv) {
                     i++;
                     std::this_thread::sleep_for(std::chrono::seconds{1});
                 } else {
+                    canceled = true;
                     break;
                 }
             }
@@ -108,8 +110,15 @@ int main(int argc, char **argv) {
                 weatherFetch.join();
                 std::cout << "Current temperature in Tallinn: " << currentTemperature.getValue() << std::endl;
             } else {
-                std::cout << *methodDef << " Request errored or timed out" << std::endl;
                 weatherFetch.detach();
+                if (canceled) {
+                    std::cout << *methodDef << " Request canceled" << std::endl;
+                } else if (errored) {
+                    // Error message was already printed above.
+                } else {
+                    std::cout << *methodDef << " Request timed out" << std::endl;
+                    weatherFetch.detach();
+                }
             }
             // Finish waiting.
             while (i < REQUEST_TIMEOUT_SECONDS) {
