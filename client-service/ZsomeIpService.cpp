@@ -4,7 +4,6 @@
 #include "ZsomeIpService.h"
 #include "zserio/BitStreamReader.h"
 
-
 namespace zsomeip {
 
 // TODO accept multiple MethodDefinitions per service/client (see pubsub)
@@ -55,7 +54,6 @@ ZsomeIpClient::ZsomeIpClient(
         std::shared_ptr<MethodDefinition> methodDefinition)
     : ZsomeIpApp(appName), def_(std::move(methodDefinition))
 {
-
     std::lock_guard<std::mutex> s_lock(clients_m_);
     app_->register_message_handler(
         def_->agent.serviceId, def_->agent.instanceId, def_->someIpMethod,
@@ -64,6 +62,7 @@ ZsomeIpClient::ZsomeIpClient(
             def_->agent.serviceId, def_->agent.instanceId,
             std::bind(&ZsomeIpClient::onAvailability, this,
                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    app_->request_service(def_->agent.serviceId, def_->agent.instanceId);
 }
 
 std::vector<uint8_t> ZsomeIpClient::callMethod(
@@ -129,9 +128,6 @@ void ZsomeIpClient::onAvailability(vsomeip::service_t service, vsomeip::instance
     std::lock_guard<std::mutex> a_guard(clients_m_);
     if (service == def_->agent.serviceId && instance == def_->agent.instanceId) {
         available_ = available;
-        if (available_) {
-            app_->request_service(def_->agent.serviceId, def_->agent.instanceId);
-        }
     }
 }
 

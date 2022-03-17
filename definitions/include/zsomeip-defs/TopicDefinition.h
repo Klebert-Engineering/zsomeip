@@ -26,7 +26,7 @@ public:
     friend std::ostream& operator<< (std::ostream &out, const TopicDefinition &def);
 
 private:
-    char *description_ = new char[255];
+    std::string description_;
 };
 
 } // namespace zsomeip

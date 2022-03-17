@@ -1,16 +1,14 @@
 #include <memory>
 #include <chrono>
 #include <iostream>
-
 #include <utility>
-#include <vsomeip/vsomeip.hpp>
 
+#include "vsomeip/vsomeip.hpp"
 #include "ZsomeIpPubsub.h"
 #include "zserio/BitBuffer.h"
 #include "zserio/BitStreamWriter.h"
 
-namespace zsomeip
-{
+namespace zsomeip {
 
 class ZsomeIpPubsub::ZsomeIpSubscription {
 public:

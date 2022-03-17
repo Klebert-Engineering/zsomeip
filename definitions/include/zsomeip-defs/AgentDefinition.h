@@ -3,7 +3,6 @@
 
 #include "vsomeip/vsomeip.hpp"
 
-
 namespace zsomeip {
 
 struct AgentDefinition {
@@ -15,6 +14,6 @@ struct AgentDefinition {
     : serviceId(s), instanceId(i) {}
 };
 
-}
+} // namespace zsomeip
 
 #endif //ZSOMEIP_AGENTDEFINITION_H

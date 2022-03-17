@@ -9,8 +9,7 @@
 #include "zsomeip-defs/MethodDefinition.h"
 #include "zsomeip-defs/ZsomeIpApp.h"
 
-namespace zsomeip
-{
+namespace zsomeip {
 
 /* Wrapper for a zserio service to be registered and offered via SOME/IP. */
 class ZsomeIpService : public ZsomeIpApp {

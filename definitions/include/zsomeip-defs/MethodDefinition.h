@@ -4,8 +4,6 @@
 #include "zserio/IService.h"
 #include "AgentDefinition.h"
 
-
-// TODO rename namespace
 namespace zsomeip {
 
 class MethodDefinition {
@@ -25,9 +23,9 @@ public:
     friend std::ostream& operator<< (std::ostream &out, const MethodDefinition &def);
 
 private:
-    char *description_ = new char[255];
+    std::string description_;
 };
 
-}
+} // namespace zsomeip
 
 #endif //ZSOMEIP_METHODDEFINITION_H
