@@ -112,14 +112,14 @@ The rough steps are as follows:
     
    // Client usage:
    zsomeip::ZsomeIpClient zsomeIpClient(APP_NAME, methodDef);
-   <MyZserioGeneratedService::Client> myClient(zsomeIpClient);
+   <ZserioGeneratedService::Client> myClient(zsomeIpClient);
    response = myClient.get<methodName>Method(<params>);
    
    // Final cleanup for both client and service.
    zsomeIpService.shutdown();
    ```
    
-4. If you defined a publish-subscribe interface, implement any ``<pubsub-name>Callback`` classes. Refer to ``MyWeatherCallback`` in the demo [weather subscriber](weather-example/publish-subscribe.cpp).
+4. If you defined a publish-subscribe interface, implement any ``<pubsubName>Callback`` classes. Refer to ``MyWeatherCallback`` in the demo [weather subscriber](weather-example/publish-subscribe.cpp).
 
     Basic publish-subscribe usage:
 
@@ -129,19 +129,20 @@ The rough steps are as follows:
     MyZerioTopics myTopics(zsomeIpPubsub);
    
    // Initialize topic definition.
-    zserio::StringView topicName("zserio/topic");
+    zserio::StringView topicString("zserio/topic");
     zsomeip::AgentDefinition defaultAgent{SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID};
     std::set<vsomeip_v3::eventgroup_t> defaultEventGroups = {SAMPLE_EVENTGROUP_ID};
    
     std::shared_ptr<zsomeip::TopicDefinition> myTopicDefinition(
-        new zsomeip::TopicDefinition({topicName, defaultAgent, SAMPLE_EVENT_ID, defaultEventGroups}));
+        new zsomeip::TopicDefinition({topicString, defaultAgent, SAMPLE_EVENT_ID, defaultEventGroups}));
    
     // Publisher usage:
     zsomeIpPubsub.addPublisher(myTopicDefinition);
-    weatherTopics.publish<topicName>(<topicItem>, static_cast<void *>(&myTopicDefinition));
+   auto topicItem = ... // Build the object to be sent via zsomeip. 
+    weatherTopics.publish<topicName>(topicItem, static_cast<void *>(&myTopicDefinition));
    
    // Subscriber usage:
-   std::shared_ptr<ZserioGeneratedTopics::ZserioGeneratedTopicsCallback<CallbackType>> callback(new <MyZserio>Callback());
+   std::shared_ptr<ZserioGeneratedTopics::ZserioGeneratedTopicsCallback<CallbackType>> callback(new <pubsubName>Callback());
    myTopics.subscribe<topicName>(callback, static_cast<void *>(&myTopicDefinition));
     // Run in loop to receive messages.
    

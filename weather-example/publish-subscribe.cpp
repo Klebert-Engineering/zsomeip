@@ -77,4 +77,4 @@ int main(int argc, char **argv) {
 
     zsomeIpPubsub.shutdown();
     return 0;
-};
+}

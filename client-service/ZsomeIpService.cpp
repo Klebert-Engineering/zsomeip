@@ -132,4 +132,3 @@ void ZsomeIpClient::onAvailability(vsomeip::service_t service, vsomeip::instance
 }
 
 } // namespace zsomeip
-
