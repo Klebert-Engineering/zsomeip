@@ -14,9 +14,14 @@ ZsomeIpService::ZsomeIpService(
         zserio::IService& internalService)
     : ZsomeIpApp(appName), def_(std::move(methodDefinition)), zService_(internalService)
 {
+    init();
     std::lock_guard<std::mutex> s_lock(services_m_);
     app_->register_message_handler(def_->agent.serviceId, def_->agent.instanceId,def_->someIpMethod,
         std::bind(&ZsomeIpService::internalCallback, this, std::placeholders::_1));
+    if (registered & !offered_) {
+        app_->offer_service(def_->agent.serviceId, def_->agent.instanceId);
+        offered_ = true;
+    }
 }
 
 void ZsomeIpService::clear()
@@ -25,12 +30,13 @@ void ZsomeIpService::clear()
     app_->stop_offer_service(def_->agent.serviceId, def_->agent.instanceId);
 }
 
-void ZsomeIpService::onState(vsomeip::state_type_e _state)
+void ZsomeIpService::onState()
 {
-    if (_state == vsomeip::state_type_e::ST_REGISTERED) {
-        std::lock_guard<std::mutex> s_lock(services_m_);
+    std::lock_guard<std::mutex> s_lock(services_m_);
+    if (registered) {
         app_->offer_service(def_->agent.serviceId, def_->agent.instanceId);
     }
+    offered_ = registered;
 }
 
 void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &request)
@@ -54,6 +60,7 @@ ZsomeIpClient::ZsomeIpClient(
         std::shared_ptr<MethodDefinition> methodDefinition)
     : ZsomeIpApp(appName), def_(std::move(methodDefinition))
 {
+    init();
     std::lock_guard<std::mutex> s_lock(clients_m_);
     app_->register_message_handler(
         def_->agent.serviceId, def_->agent.instanceId, def_->someIpMethod,
@@ -72,7 +79,7 @@ std::vector<uint8_t> ZsomeIpClient::callMethod(
 {
     std::vector<uint8_t> responseData{};
 
-    if (!registered_) {
+    if (!registered) {
         throw ZsomeIpRuntimeError("registering not completed, skipping request");
     }
 
@@ -122,7 +129,7 @@ void ZsomeIpClient::onResponse(const std::shared_ptr<vsomeip::message> &response
     response_arrived_.notify_one();
 }
 
-void ZsomeIpClient::onState(vsomeip::state_type_e _state) {}
+void ZsomeIpClient::onState() {}
 
 void ZsomeIpClient::onAvailability(vsomeip::service_t service, vsomeip::instance_t instance, bool available) {
     std::lock_guard<std::mutex> a_guard(clients_m_);

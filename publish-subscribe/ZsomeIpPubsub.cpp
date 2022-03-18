@@ -83,9 +83,11 @@ public:
     ZsomeIpPublisher(ZsomeIpPublisher&& other) = delete;
     ZsomeIpPublisher& operator=(ZsomeIpPublisher&& other) = delete;
 
+    void offer();
     void publish(const zserio::Span<const uint8_t>& data);
 
     std::shared_ptr<zsomeip::TopicDefinition> def_;
+    bool offered = false;
 
 private:
     std::shared_ptr<vsomeip::application> app_;
@@ -101,6 +103,15 @@ ZsomeIpPubsub::ZsomeIpPublisher::~ZsomeIpPublisher()
     app_->stop_offer_service(def_->agent.serviceId, def_->agent.instanceId);
 }
 
+void ZsomeIpPubsub::ZsomeIpPublisher::offer()
+{
+    app_->offer_service(def_->agent.serviceId, def_->agent.instanceId);
+    app_->offer_event(def_->agent.serviceId, def_->agent.instanceId, def_->eventId, def_->eventGroups,
+        vsomeip::event_type_e::ET_EVENT, std::chrono::milliseconds::zero(),
+        false, true, nullptr, vsomeip::reliability_type_e::RT_UNKNOWN); // TODO support tcp
+    offered = true;
+}
+
 void ZsomeIpPubsub::ZsomeIpPublisher::publish(const zserio::Span<const uint8_t>& data)
 {
     auto payload_ = vsomeip::runtime::get()->create_payload({data.begin(), data.end()});
@@ -108,7 +119,10 @@ void ZsomeIpPubsub::ZsomeIpPublisher::publish(const zserio::Span<const uint8_t>&
 }
 
 ZsomeIpPubsub::ZsomeIpPubsub(const std::string& appName, bool useTcp)
-        : ZsomeIpApp(appName), useTcp_(useTcp), idCounter_(0) {}
+        : ZsomeIpApp(appName), useTcp_(useTcp), idCounter_(0)
+{
+    init();
+}
 
 ZsomeIpPubsub::~ZsomeIpPubsub() = default;
 
@@ -117,6 +131,9 @@ bool ZsomeIpPubsub::addPublisher(std::shared_ptr<zsomeip::TopicDefinition> &def)
     std::lock_guard<std::mutex> p_lock(publishers_m_);
     if (publishers_.find(def->topic) == publishers_.end()) {
         publishers_.emplace(def->topic, std::make_unique<ZsomeIpPublisher>(app_, def));
+        if (registered) { // Can offer event immediately - otherwise, will wait for onState.
+            publishers_[def->topic]->offer();
+        }
         return true;
     }
     else {
@@ -128,14 +145,13 @@ bool ZsomeIpPubsub::addPublisher(std::shared_ptr<zsomeip::TopicDefinition> &def)
 
 void ZsomeIpPubsub::publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void*)
 {
-    if (!registered_) {
+    std::lock_guard<std::mutex> p_lock(publishers_m_);
+    if (!registered) {
         std::cout << "[ERROR] Tried to publish before registering complete. Skipping..." << std:: endl;
         return;
     }
-    std::lock_guard<std::mutex> p_lock(publishers_m_);
     if (publishers_.find(topic) == publishers_.end()) {
-        std::cout << "[ERROR] No publisher available for "
-                  << std::string(topic.begin(), topic.end()) << std::endl;
+        std::cout << "[ERROR] No publisher available for " << std::string(topic.begin(), topic.end()) << std::endl;
         return;
     }
     publishers_[topic]->publish(data);
@@ -171,19 +187,17 @@ void ZsomeIpPubsub::clear()
     }
 }
 
-void ZsomeIpPubsub::onState(vsomeip::state_type_e _state)
+void ZsomeIpPubsub::onState()
 {
-    if (_state == vsomeip::state_type_e::ST_REGISTERED) {
-        {
-            std::lock_guard<std::mutex> p_lock(publishers_m_);
-            for (auto &publisher: publishers_) {
-                auto def = publisher.second->def_;
-                app_->offer_service(def->agent.serviceId, def->agent.instanceId);
-                app_->offer_event(
-                def->agent.serviceId, def->agent.instanceId, def->eventId, def->eventGroups,
-                vsomeip::event_type_e::ET_EVENT, std::chrono::milliseconds::zero(),
-                false, true, nullptr, vsomeip::reliability_type_e::RT_UNKNOWN); // TODO support tcp
-            }
+    std::lock_guard<std::mutex> p_lock(publishers_m_);
+    if (registered) {
+        for (auto &publisher: publishers_) {
+            publisher.second->offer();
+        }
+    }
+    else {
+        for (auto &publisher: publishers_) {
+            publisher.second->offered = false;
         }
     }
 }

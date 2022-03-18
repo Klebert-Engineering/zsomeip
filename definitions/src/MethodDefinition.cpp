@@ -8,10 +8,10 @@ MethodDefinition::MethodDefinition(
         const vsomeip::method_t someIpMethod)
     : zserioMethod(zserioMethod), agent(agent), someIpMethod(someIpMethod) {
 
-    char *proto_description_ = new char[255];
-    snprintf(proto_description_, 255, "[%s] (%x.%x.%x)",
+    char proto_description[255] = {0};
+    snprintf(proto_description, 255, "[%s] (%x.%x.%x)",
             zserio::stringViewToString(zserioMethod).c_str(), agent.serviceId, agent.instanceId, someIpMethod);
-    description_ = proto_description_;
+    description_ = std::string(proto_description);
 
 }
 

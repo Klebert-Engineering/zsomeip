@@ -35,10 +35,11 @@ public:
 
 protected:
     void clear() override;
-    void onState(vsomeip::state_type_e _state) override;
+    void onState() override;
 
 private:
     bool useTcp_; // TODO UDP/TCP switch
+
     std::map<SubscriptionId, std::unique_ptr<ZsomeIpSubscription>> subscriptions_;
     SubscriptionId idCounter_{};
     std::map<zserio::StringView, std::unique_ptr<ZsomeIpPublisher>> publishers_;

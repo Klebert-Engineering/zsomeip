@@ -13,10 +13,10 @@ TopicDefinition::TopicDefinition(
         std::set<vsomeip::eventgroup_t> eventGroups)
     : topic(zserioTopic), agent(agent), eventId(eventId), eventGroups(std::move(eventGroups)) {
 
-    char *proto_description_ = new char[255];
-    snprintf(proto_description_, 255, "[%s] (%x.%x.%x)",
+    char proto_description[255] = {0};
+    snprintf(proto_description, 255, "[%s] (%x.%x.%x)",
             zserio::stringViewToString(topic).c_str(), agent.serviceId, agent.instanceId, eventId);
-    description_ = proto_description_;
+    description_ = std::string(proto_description);
 
 }
 
