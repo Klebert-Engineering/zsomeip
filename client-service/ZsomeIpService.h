@@ -4,10 +4,16 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "zserio/CppRuntimeVersion.h"
+#include "zserio/tools/
 #include "zserio/IService.h"
 #include "vsomeip/vsomeip.hpp"
 #include "zsomeip-defs/MethodDefinition.h"
 #include "zsomeip-defs/ZsomeIpApp.h"
+
+#if CPP_EXTENSION_RUNTIME_VERSION_STRING == "2.4.2"
+    #define ZSERIO_2_4_2_SERVICE_INTERFACE
+#endif
 
 namespace zsomeip {
 
@@ -33,15 +39,29 @@ private:
 };
 
 /* Sends requests to zserio services via SOME/IP.  */
-class ZsomeIpClient : public zserio::IServiceClient, public ZsomeIpApp {
-public:
-    ZsomeIpClient(
-        const std::string& appName,
-        std::shared_ptr<MethodDefinition> methodDefinition);
-    std::vector<uint8_t> callMethod(
-        zserio::StringView methodName,
-        const zserio::IServiceData& requestData,
-        void* context) override;
+class ZsomeIpClient
+#ifndef ZSERIO_2_4_2_SERVICE_INTERFACE
+    : public ZsomeIpApp, public zserio::IServiceClient {
+    public:
+        ZsomeIpClient(
+            const std::string& appName,
+            std::shared_ptr<MethodDefinition> methodDefinition);
+        std::vector<uint8_t> callMethod(
+            zserio::StringView methodName,
+            const zserio::IServiceData& requestData,
+            void* context) override;
+#else
+    : public ZsomeIpApp, public zserio::IService {
+    public:
+        ZsomeIpClient(
+            const std::string& appName,
+            std::shared_ptr<MethodDefinition> methodDefinition);
+            void callMethod(
+                zserio::StringView methodName,
+                zserio::Span<const uint8_t> requestData,
+                zserio::IBlobBuffer& responseData,
+                void* context) override;
+#endif
 
 protected:
     void clear() override;
