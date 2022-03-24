@@ -45,16 +45,16 @@ void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &r
     uint32_t length = request->get_payload()->get_length();
     std::vector<uint8_t> data(payload, payload + length);
     std::shared_ptr<vsomeip::message> response = vsomeip::runtime::get()->create_response(request);
-#ifndef ZSERIO_2_4_2_SERVICE_INTERFACE
-    auto responseData = zService_.callMethod(zserio::StringView(def_->zserioMethod),
-                          zserio::Span<const uint8_t>(data));
-    std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
-            {responseData->getData().begin(), responseData->getData().end()});
-#else
+#if ZSERIO_2_4_2_SERVICE_INTERFACE
     zserio::BlobBuffer<> responseData;
     zService_.callMethod(zserio::StringView(def_->zserioMethod), zserio::Span<const uint8_t>(data), responseData);
     std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
             {responseData.data().begin(), responseData.data().end()});
+#else
+    auto responseData = zService_.callMethod(zserio::StringView(def_->zserioMethod),
+                          zserio::Span<const uint8_t>(data));
+    std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
+            {responseData->getData().begin(), responseData->getData().end()});
 #endif
     response->set_payload(responsePayload);
     app_->send(response);
@@ -79,7 +79,44 @@ ZsomeIpClient::ZsomeIpClient(
 }
 
 
-#ifndef ZSERIO_2_4_2_SERVICE_INTERFACE
+#if ZSERIO_2_4_2_SERVICE_INTERFACE
+    void ZsomeIpClient::callMethod(
+            zserio::StringView methodName,
+            zserio::Span<const uint8_t> requestData,
+            zserio::IBlobBuffer& responseData,
+            void* context)
+    {
+        if (!registered) {
+            throw ZsomeIpRuntimeError("registering not completed, skipping request");
+        }
+
+        {
+            std::lock_guard<std::mutex> a_guard(clients_m_);
+            if (!available_) {
+                throw ZsomeIpRuntimeError("service unavailable, skipping request");
+            }
+        }
+
+        std::shared_ptr<vsomeip::message> request = vsomeip::runtime::get()->create_request();
+        request->set_service(def_->agent.serviceId);
+        request->set_instance(def_->agent.instanceId);
+        request->set_method(def_->someIpMethod);
+        std::shared_ptr<vsomeip::payload> requestPayload = vsomeip::runtime::get()->create_payload(
+                {requestData.begin(), requestData.end()});
+        request->set_payload(requestPayload);
+
+        std::unique_lock<std::mutex> lock_until_response(running_mutex_);
+        app_->send(request);
+        response_arrived_.wait(lock_until_response);
+
+        if (response_code_ != vsomeip::return_code_e::E_OK) {
+            throw ZsomeIpRuntimeError(response_code_);
+        }
+
+        responseData.resize(response_payload_->get_length());
+        std::copy_n(response_payload_->get_data(), response_payload_->get_length(), responseData.data().begin());
+    }
+#else
     std::vector<uint8_t> ZsomeIpClient::callMethod(
             zserio::StringView methodName,
             const RequestDataType& requestData,
@@ -120,45 +157,6 @@ ZsomeIpClient::ZsomeIpClient(
         std::copy_n(payload, length, responseData.begin());
 
         return responseData;
-    }
-#else
-    void ZsomeIpClient::callMethod(
-            zserio::StringView methodName,
-            zserio::Span<const uint8_t> requestData,
-            zserio::IBlobBuffer& responseData,
-            void* context)
-    {
-        if (!registered) {
-            throw ZsomeIpRuntimeError("registering not completed, skipping request");
-        }
-
-        {
-            std::lock_guard<std::mutex> a_guard(clients_m_);
-            if (!available_) {
-                throw ZsomeIpRuntimeError("service unavailable, skipping request");
-            }
-        }
-
-        std::shared_ptr<vsomeip::message> request = vsomeip::runtime::get()->create_request();
-        request->set_service(def_->agent.serviceId);
-        request->set_instance(def_->agent.instanceId);
-        request->set_method(def_->someIpMethod);
-        std::shared_ptr<vsomeip::payload> requestPayload = vsomeip::runtime::get()->create_payload(
-            {requestData.begin(), requestData.end()});
-        request->set_payload(requestPayload);
-
-        std::unique_lock<std::mutex> lock_until_response(running_mutex_);
-        app_->send(request);
-        response_arrived_.wait(lock_until_response);
-
-        if (response_code_ != vsomeip::return_code_e::E_OK) {
-            throw ZsomeIpRuntimeError(response_code_);
-        }
-
-        std::string incomingData = std::string(reinterpret_cast<const char*>(response_payload_->get_data()),
-                                               0, response_payload_->get_length());
-        responseData.resize(response_payload_->get_length());
-        std::copy(incomingData.begin(), incomingData.end(), responseData.data().begin());
     }
 #endif
 
