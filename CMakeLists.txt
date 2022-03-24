@@ -23,6 +23,11 @@ endif()
 
 add_subdirectory(definitions)
 
+################################################################
+# Remove this definition to use zserio 2.5.0 service interface #
+################################################################
+add_compile_definitions(ZSERIO_2_4_2_SERVICE_INTERFACE)
+
 add_library(ZsomeIpService
   client-service/ZsomeIpService.cpp
   client-service/ZsomeIpService.h)

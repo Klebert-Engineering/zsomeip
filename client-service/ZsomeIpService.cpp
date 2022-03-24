@@ -45,7 +45,7 @@ void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &r
     uint32_t length = request->get_payload()->get_length();
     std::vector<uint8_t> data(payload, payload + length);
     std::shared_ptr<vsomeip::message> response = vsomeip::runtime::get()->create_response(request);
-#if ZSERIO_2_4_2_SERVICE_INTERFACE
+#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
     zserio::BlobBuffer<> responseData;
     zService_.callMethod(zserio::StringView(def_->zserioMethod), zserio::Span<const uint8_t>(data), responseData);
     std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
@@ -79,7 +79,7 @@ ZsomeIpClient::ZsomeIpClient(
 }
 
 
-#if ZSERIO_2_4_2_SERVICE_INTERFACE
+#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
     void ZsomeIpClient::callMethod(
             zserio::StringView methodName,
             zserio::Span<const uint8_t> requestData,
@@ -119,7 +119,7 @@ ZsomeIpClient::ZsomeIpClient(
 #else
     std::vector<uint8_t> ZsomeIpClient::callMethod(
             zserio::StringView methodName,
-            const RequestDataType& requestData,
+            const zserio::IServiceData& requestData,
             void* context)
     {
         std::vector<uint8_t> responseData{};

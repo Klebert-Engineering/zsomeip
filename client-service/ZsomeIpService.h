@@ -10,9 +10,6 @@
 #include "zsomeip-defs/ZsomeIpApp.h"
 
 
-#define ZSERIO_2_4_2_SERVICE_INTERFACE true
-
-
 namespace zsomeip {
 
 /* Wrapper for a zserio service to be registered and offered via SOME/IP. */
@@ -38,7 +35,7 @@ private:
 
 /* Sends requests to zserio services via SOME/IP.  */
 class ZsomeIpClient
-#if ZSERIO_2_4_2_SERVICE_INTERFACE
+#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
             : public ZsomeIpApp, public zserio::IService {
     public:
         ZsomeIpClient(
