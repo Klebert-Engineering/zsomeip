@@ -62,7 +62,7 @@ Starting the subscriber:
 
 ```bash
 LD_LIBRARY_PATH=./deps/vsomeip \
-VSOMEIP_CONFIGURATION=../conf/pubsub-local.json \
+VSOMEIP_CONFIGURATION=../conf/pubsub-unreliable.json \
 ./zsomeip_pubsub_demo --subscribe
 ```
 
@@ -70,7 +70,7 @@ Starting the publisher:
 
 ```bash
 LD_LIBRARY_PATH=./deps/vsomeip \
-VSOMEIP_CONFIGURATION=../conf/pubsub-local.json \
+VSOMEIP_CONFIGURATION=../conf/pubsub-unreliable.json \
 ./zsomeip_pubsub_demo --publish
 ```
 
@@ -80,7 +80,7 @@ Starting the service:
 
 ```bash
 LD_LIBRARY_PATH=./deps/vsomeip \
-VSOMEIP_CONFIGURATION=../conf/service-local.json \
+VSOMEIP_CONFIGURATION=../conf/service-unreliable.json \
 ./zsomeip_service_demo --service
 ```
 
@@ -88,8 +88,22 @@ Starting the client:
 
 ```bash
 LD_LIBRARY_PATH=./deps/vsomeip \
-VSOMEIP_CONFIGURATION=../conf/service-local.json \
+VSOMEIP_CONFIGURATION=../conf/service-unreliable.json \
 ./zsomeip_service_demo --client
+```
+
+### Run the demo with TCP
+
+To run the weather examples using TCP (reliable connection), change ``client-service.cpp`` to read:
+
+```c++
+#define USE_TCP true
+```
+
+Demo executables can then be started in the same way as above, but with different configuration files:
+
+```bash
+VSOMEIP_CONFIGURATION=../conf/<pubsub|service>-reliable.json
 ```
 
 ## Building your own app

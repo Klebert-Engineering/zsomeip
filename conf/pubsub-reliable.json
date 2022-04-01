@@ -23,7 +23,10 @@
     {
       "service" : "0x1234",
       "instance" : "0x5678",
-      "unreliable" : "30509",
+      "reliable": {
+        "port": "30509",
+        "enable-magic-cookies": false
+      },
       "events" :
       [
         {
