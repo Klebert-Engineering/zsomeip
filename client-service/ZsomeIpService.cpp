@@ -97,7 +97,7 @@ ZsomeIpClient::ZsomeIpClient(
             }
         }
 
-        std::shared_ptr<vsomeip::message> request = vsomeip::runtime::get()->create_request();
+        auto request = vsomeip::runtime::get()->create_request();
         request->set_service(def_->agent.serviceId);
         request->set_instance(def_->agent.instanceId);
         request->set_method(def_->someIpMethod);
@@ -135,11 +135,11 @@ ZsomeIpClient::ZsomeIpClient(
             }
         }
 
-        std::shared_ptr<vsomeip::message> request = vsomeip::runtime::get()->create_request();
+        auto request = vsomeip::runtime::get()->create_request();
         request->set_service(def_->agent.serviceId);
         request->set_instance(def_->agent.instanceId);
         request->set_method(def_->someIpMethod);
-        std::shared_ptr<vsomeip::payload> requestPayload = vsomeip::runtime::get()->create_payload(
+        auto requestPayload = vsomeip::runtime::get()->create_payload(
                 {requestData.getData().begin(), requestData.getData().end()});
         request->set_payload(requestPayload);
 
@@ -152,7 +152,7 @@ ZsomeIpClient::ZsomeIpClient(
         }
 
         auto* payload = static_cast<uint8_t*>(response_payload_->get_data());
-        uint32_t length = response_payload_->get_length();
+        auto length = response_payload_->get_length();
         responseData.resize(length);
         std::copy_n(payload, length, responseData.begin());
 

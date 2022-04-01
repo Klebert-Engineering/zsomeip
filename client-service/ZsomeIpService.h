@@ -36,7 +36,7 @@ private:
 /* Sends requests to zserio services via SOME/IP.  */
 class ZsomeIpClient
 #ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
-            : public ZsomeIpApp, public zserio::IService {
+    : public ZsomeIpApp, public zserio::IService {
     public:
         ZsomeIpClient(
                 const std::string& appName,

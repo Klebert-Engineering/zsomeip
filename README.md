@@ -96,12 +96,18 @@ VSOMEIP_CONFIGURATION=../conf/service-local.json \
 
 ### Choosing the right zserio version
 
-Service interfaces changed with the zserio 2.5.0 release. While zsomeip is currently configured to work with zserio 2.4.2 out of the box, you can build using zserio >= 2.5.0 by commenting out the following line in root ``CMakeLists.txt``:
+Service interfaces changed with the zserio 2.5.0 release. While zsomeip is currently configured to work with zserio 2.4.2 out of the box, you can build using zserio >= 2.5.0 by setting the following option in your project's ``CMakeLists.txt``:
 
-```c++
-add_compile_definitions(ZSERIO_2_4_2_SERVICE_INTERFACE)
+```cmake
+set(ZSOMEIP_USE_ZSERIO_2_5_0_SERVICE_INTERFACE ON)
 ```
 In the future, zserio 2.4.2 support will be removed.
+
+If you change the zserio version of an existing CMake build, you must also delete the build directory and build from scratch.
+The build error below happens when already built zserio tools conflict with the new version:
+```bash
+java.lang.IncompatibleClassChangeError: Found class zserio.tools.ExtensionParameters, but interface was expected
+```
 
 ### Basic components
 
