@@ -9,6 +9,7 @@
 #define SAMPLE_SERVICE_ID       0x1111
 #define SAMPLE_INSTANCE_ID      0x2222
 #define SAMPLE_METHOD_ID        0x3333
+#define USE_TCP                 false
 
 #define REQUEST_TIMEOUT_SECONDS 10
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
     zserio::StringView serviceMethod("getTemperatureIn");
     zsomeip::AgentDefinition defaultAgent{SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID};
     std::shared_ptr<zsomeip::MethodDefinition> methodDef(
-            new zsomeip::MethodDefinition(serviceMethod, defaultAgent, SAMPLE_METHOD_ID));
+            new zsomeip::MethodDefinition(serviceMethod, defaultAgent, SAMPLE_METHOD_ID, USE_TCP));
 
     std::string appName = runAsService ? "zsomeip_service" : "zsomeip_client";
 

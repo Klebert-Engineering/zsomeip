@@ -97,7 +97,7 @@ ZsomeIpClient::ZsomeIpClient(
             }
         }
 
-        auto request = vsomeip::runtime::get()->create_request();
+        auto request = vsomeip::runtime::get()->create_request(def_->reliable);
         request->set_service(def_->agent.serviceId);
         request->set_instance(def_->agent.instanceId);
         request->set_method(def_->someIpMethod);

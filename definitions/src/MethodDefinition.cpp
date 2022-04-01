@@ -5,8 +5,9 @@ namespace zsomeip {
 MethodDefinition::MethodDefinition(
         const zserio::StringView zserioMethod,
         const zsomeip::AgentDefinition &agent,
-        const vsomeip::method_t someIpMethod)
-    : zserioMethod(zserioMethod), agent(agent), someIpMethod(someIpMethod) {
+        const vsomeip::method_t someIpMethod,
+        const bool reliable)
+    : zserioMethod(zserioMethod), agent(agent), someIpMethod(someIpMethod), reliable(reliable) {
 
     char proto_description[255] = {0};
     snprintf(proto_description, 255, "[%s] (%x.%x.%x)",
