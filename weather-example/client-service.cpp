@@ -110,14 +110,18 @@ int main(int argc, char **argv) {
                 weatherFetch.join();
                 std::cout << "Current temperature in Tallinn: " << currentTemperature.getValue() << std::endl;
             } else {
-                weatherFetch.detach();
-                if (canceled) {
-                    std::cout << *methodDef << " Request canceled" << std::endl;
-                } else if (errored) {
-                    // Error message was already printed above.
-                } else {
-                    std::cout << *methodDef << " Request timed out" << std::endl;
+                try {
                     weatherFetch.detach();
+                    if (canceled) {
+                        std::cout << *methodDef << " Request canceled" << std::endl;
+                    } else if (errored) {
+                        // Error message was already printed above.
+                    } else {
+                        std::cout << *methodDef << " Request timed out" << std::endl;
+                    }
+                } catch (const std::exception& e) {
+                    errored = true;
+                    std::cout << *methodDef << " [ERROR] " << e.what() << std::endl;
                 }
             }
             // Finish waiting.
