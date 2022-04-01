@@ -23,6 +23,11 @@ endif()
 
 add_subdirectory(definitions)
 
+option(ZSOMEIP_USE_ZSERIO_2_5_0_SERVICE_INTERFACE OFF)
+if (NOT ZSOMEIP_USE_ZSERIO_2_5_0_SERVICE_INTERFACE)
+  add_compile_definitions(ZSERIO_2_4_2_SERVICE_INTERFACE)
+endif()
+
 add_library(ZsomeIpService
   client-service/ZsomeIpService.cpp
   client-service/ZsomeIpService.h)

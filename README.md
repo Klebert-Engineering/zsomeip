@@ -2,11 +2,11 @@
 
 Reference implementation with examples for sending and receiving [zserio-encoded](https://zserio.org/) data over [SOME/IP](https://some-ip.com/). 
 
-Have a look at the **Get started** section to run a small weather service, or the **Build your own** section below for instructions on how to use zsomeip in a custom client-service or publish-subscribe app.
+Have a look at the **Getting started** section to run a small weather service, or the **Building your own app** section below for instructions on how to use zsomeip in a custom client-service or publish-subscribe app.
 
 For a nice introduction to the SOME/IP reference implementation used by this project, refer to the [vsomeip in 10 minutes](https://github.com/COVESA/vsomeip/wiki/vsomeip-in-10-minutes) tutorial.
 
-## Get started
+## Getting started
 
 Install prerequisites for [vsomeip](https://github.com/COVESA/vsomeip/):
 
@@ -92,7 +92,24 @@ VSOMEIP_CONFIGURATION=../conf/service-local.json \
 ./zsomeip_service_demo --client
 ```
 
-## Build your own
+## Building your own app
+
+### Choosing the right zserio version
+
+Service interfaces changed with the zserio 2.5.0 release. While zsomeip is currently configured to work with zserio 2.4.2 out of the box, you can build using zserio >= 2.5.0 by setting the following option in your project's ``CMakeLists.txt``:
+
+```cmake
+set(ZSOMEIP_USE_ZSERIO_2_5_0_SERVICE_INTERFACE ON)
+```
+In the future, zserio 2.4.2 support will be removed.
+
+If you change the zserio version of an existing CMake build, you must also delete the build directory and build from scratch.
+The build error below happens when already built zserio tools conflict with the new version:
+```bash
+java.lang.IncompatibleClassChangeError: Found class zserio.tools.ExtensionParameters, but interface was expected
+```
+
+### Basic components
 
 Check the ``weather-example`` subdirectory for code references.
 The rough implementation steps are as follows:

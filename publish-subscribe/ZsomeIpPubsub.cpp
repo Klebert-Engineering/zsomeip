@@ -143,18 +143,21 @@ bool ZsomeIpPubsub::addPublisher(std::shared_ptr<zsomeip::TopicDefinition> &def)
     }
 }
 
-void ZsomeIpPubsub::publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void*)
+void ZsomeIpPubsub::publish(zserio::StringView topic, zserio::Span<const uint8_t> data, void* topicDefinition)
 {
+    // Zserio-provided topic string still contains wildcards -> use topic from context.
+    auto def = *(std::shared_ptr<TopicDefinition>*)topicDefinition;
+    auto realTopic = def->topic;
     std::lock_guard<std::mutex> p_lock(publishers_m_);
     if (!registered) {
         std::cout << "[ERROR] Tried to publish before registering complete. Skipping..." << std:: endl;
         return;
     }
-    if (publishers_.find(topic) == publishers_.end()) {
+    if (publishers_.find(realTopic) == publishers_.end()) {
         std::cout << "[ERROR] No publisher available for " << std::string(topic.begin(), topic.end()) << std::endl;
         return;
     }
-    publishers_[topic]->publish(data);
+    publishers_[realTopic]->publish(data);
 }
 
 ZsomeIpPubsub::SubscriptionId ZsomeIpPubsub::subscribe(
