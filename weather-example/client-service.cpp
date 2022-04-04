@@ -9,6 +9,7 @@
 #define SAMPLE_SERVICE_ID       0x1111
 #define SAMPLE_INSTANCE_ID      0x2222
 #define SAMPLE_METHOD_ID        0x3333
+#define USE_TCP                 false
 
 #define REQUEST_TIMEOUT_SECONDS 10
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
     zserio::StringView serviceMethod("getTemperatureIn");
     zsomeip::AgentDefinition defaultAgent{SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID};
     std::shared_ptr<zsomeip::MethodDefinition> methodDef(
-            new zsomeip::MethodDefinition(serviceMethod, defaultAgent, SAMPLE_METHOD_ID));
+            new zsomeip::MethodDefinition(serviceMethod, defaultAgent, SAMPLE_METHOD_ID, USE_TCP));
 
     std::string appName = runAsService ? "zsomeip_service" : "zsomeip_client";
 
@@ -110,14 +111,18 @@ int main(int argc, char **argv) {
                 weatherFetch.join();
                 std::cout << "Current temperature in Tallinn: " << currentTemperature.getValue() << std::endl;
             } else {
-                weatherFetch.detach();
-                if (canceled) {
-                    std::cout << *methodDef << " Request canceled" << std::endl;
-                } else if (errored) {
-                    // Error message was already printed above.
-                } else {
-                    std::cout << *methodDef << " Request timed out" << std::endl;
+                try {
                     weatherFetch.detach();
+                    if (canceled) {
+                        std::cout << *methodDef << " Request canceled" << std::endl;
+                    } else if (errored) {
+                        // Error message was already printed above.
+                    } else {
+                        std::cout << *methodDef << " Request timed out" << std::endl;
+                    }
+                } catch (const std::exception& e) {
+                    errored = true;
+                    std::cout << *methodDef << " [ERROR] " << e.what() << std::endl;
                 }
             }
             // Finish waiting.
