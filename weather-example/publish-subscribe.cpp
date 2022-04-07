@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
         if (runAsPublisher) {
             std::cout << "Publishing current weather: " << currentWeather.getDescription() << std::endl;
             weatherTopics.publishCurrentWeather(currentWeather, static_cast<void *>(&weatherTopicDefinition));
-            std::this_thread::sleep_for(std::chrono::seconds{1});
+            std::this_thread::sleep_for(std::chrono::seconds{5});
         }
     }
 

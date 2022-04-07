@@ -9,6 +9,7 @@
 #include "zsomeip-defs/MethodDefinition.h"
 #include "zsomeip-defs/ZsomeIpApp.h"
 
+
 namespace zsomeip {
 
 /* Wrapper for a zserio service to be registered and offered via SOME/IP. */
@@ -33,15 +34,29 @@ private:
 };
 
 /* Sends requests to zserio services via SOME/IP.  */
-class ZsomeIpClient : public zserio::IServiceClient, public ZsomeIpApp {
-public:
-    ZsomeIpClient(
-        const std::string& appName,
-        std::shared_ptr<MethodDefinition> methodDefinition);
-    std::vector<uint8_t> callMethod(
-        zserio::StringView methodName,
-        const zserio::IServiceData& requestData,
-        void* context) override;
+class ZsomeIpClient
+#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
+    : public ZsomeIpApp, public zserio::IService {
+    public:
+        ZsomeIpClient(
+                const std::string& appName,
+                std::shared_ptr<MethodDefinition> methodDefinition);
+        void callMethod(
+                zserio::StringView methodName,
+                zserio::Span<const uint8_t> requestData,
+                zserio::IBlobBuffer& responseData,
+                void* context) override;
+#else
+    : public ZsomeIpApp, public zserio::IServiceClient {
+    public:
+        ZsomeIpClient(
+            const std::string& appName,
+            std::shared_ptr<MethodDefinition> methodDefinition);
+        std::vector<uint8_t> callMethod(
+            zserio::StringView methodName,
+            const zserio::IServiceData& requestData,
+            void* context) override;
+#endif
 
 protected:
     void clear() override;
