@@ -3,7 +3,7 @@
 	url = https://github.com/ndsev/zserio.git
 [submodule "deps/vsomeip"]
 	path = deps/vsomeip
-	url = https://github.com/COVESA/vsomeip.git
+	url = https://github.com/Klebert-Engineering/vsomeip
 [submodule "deps/zserio-cmake-helper"]
 	path = deps/zserio-cmake-helper
 	url = https://github.com/Klebert-Engineering/zserio-cmake-helper.git
