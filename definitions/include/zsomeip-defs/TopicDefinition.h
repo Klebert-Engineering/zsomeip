@@ -1,6 +1,8 @@
 #ifndef ZSOMEIP_TOPICDEFINITION_H
 #define ZSOMEIP_TOPICDEFINITION_H
 
+#include <ostream>
+
 #include "zserio/IPubsub.h"
 #include "vsomeip/primitive_types.hpp"
 #include "vsomeip/vsomeip.hpp"
