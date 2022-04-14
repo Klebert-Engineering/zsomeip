@@ -1,6 +1,8 @@
 #ifndef ZSOMEIP_METHODDEFINITION_H
 #define ZSOMEIP_METHODDEFINITION_H
 
+#include <ostream>
+
 #include "zserio/IService.h"
 #include "AgentDefinition.h"
 

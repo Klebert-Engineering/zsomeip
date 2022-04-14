@@ -45,17 +45,10 @@ void ZsomeIpService::internalCallback(const std::shared_ptr<vsomeip::message> &r
     uint32_t length = request->get_payload()->get_length();
     std::vector<uint8_t> data(payload, payload + length);
     std::shared_ptr<vsomeip::message> response = vsomeip::runtime::get()->create_response(request);
-#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
-    zserio::BlobBuffer<> responseData;
-    zService_.callMethod(zserio::StringView(def_->zserioMethod), zserio::Span<const uint8_t>(data), responseData);
-    std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
-            {responseData.data().begin(), responseData.data().end()});
-#else
     auto responseData = zService_.callMethod(zserio::StringView(def_->zserioMethod),
                           zserio::Span<const uint8_t>(data));
     std::shared_ptr<vsomeip::payload> responsePayload = vsomeip::runtime::get()->create_payload(
             {responseData->getData().begin(), responseData->getData().end()});
-#endif
     response->set_payload(responsePayload);
     app_->send(response);
 }
@@ -79,12 +72,17 @@ ZsomeIpClient::ZsomeIpClient(
 }
 
 
-#ifdef ZSERIO_2_4_2_SERVICE_INTERFACE
-    void ZsomeIpClient::callMethod(
+#ifdef ZSERIO_2_5_0_PRE1_SERVICE_INTERFACE
+    std::vector<uint8_t> ZsomeIpClient::callMethod(
             zserio::StringView methodName,
-            zserio::Span<const uint8_t> requestData,
-            zserio::IBlobBuffer& responseData,
+            const zserio::BasicRequestData<std::allocator<uint8_t>>& requestData,
             void* context)
+#else
+    std::vector<uint8_t> ZsomeIpClient::callMethod(
+            zserio::StringView methodName,
+            const zserio::IServiceData& requestData,
+            void* context)
+#endif
     {
         if (!registered) {
             throw ZsomeIpRuntimeError("registering not completed, skipping request");
@@ -101,44 +99,6 @@ ZsomeIpClient::ZsomeIpClient(
         request->set_service(def_->agent.serviceId);
         request->set_instance(def_->agent.instanceId);
         request->set_method(def_->someIpMethod);
-        std::shared_ptr<vsomeip::payload> requestPayload = vsomeip::runtime::get()->create_payload(
-                {requestData.begin(), requestData.end()});
-        request->set_payload(requestPayload);
-
-        std::unique_lock<std::mutex> lock_until_response(running_mutex_);
-        app_->send(request);
-        response_arrived_.wait(lock_until_response);
-
-        if (response_code_ != vsomeip::return_code_e::E_OK) {
-            throw ZsomeIpRuntimeError(response_code_);
-        }
-
-        responseData.resize(response_payload_->get_length());
-        std::copy_n(response_payload_->get_data(), response_payload_->get_length(), responseData.data().begin());
-    }
-#else
-    std::vector<uint8_t> ZsomeIpClient::callMethod(
-            zserio::StringView methodName,
-            const zserio::IServiceData& requestData,
-            void* context)
-    {
-        std::vector<uint8_t> responseData{};
-
-        if (!registered) {
-            throw ZsomeIpRuntimeError("registering not completed, skipping request");
-        }
-
-        {
-            std::lock_guard<std::mutex> a_guard(clients_m_);
-            if (!available_) {
-                throw ZsomeIpRuntimeError("service unavailable, skipping request");
-            }
-        }
-
-        auto request = vsomeip::runtime::get()->create_request();
-        request->set_service(def_->agent.serviceId);
-        request->set_instance(def_->agent.instanceId);
-        request->set_method(def_->someIpMethod);
         auto requestPayload = vsomeip::runtime::get()->create_payload(
                 {requestData.getData().begin(), requestData.getData().end()});
         request->set_payload(requestPayload);
@@ -151,6 +111,8 @@ ZsomeIpClient::ZsomeIpClient(
             throw ZsomeIpRuntimeError(response_code_);
         }
 
+        std::vector<uint8_t> responseData{};
+
         auto* payload = static_cast<uint8_t*>(response_payload_->get_data());
         auto length = response_payload_->get_length();
         responseData.resize(length);
@@ -158,7 +120,6 @@ ZsomeIpClient::ZsomeIpClient(
 
         return responseData;
     }
-#endif
 
 void ZsomeIpClient::clear()
 {
